@@ -13,10 +13,10 @@ const upload = multer({ storage: storage });
 
 // Подключение к базе данных MySQL
 const db = mysql.createPool({
-    host: 'localhost',
+    host: 'mysql.railway.internal',
     user: 'root',
-    password: 'your_password',
-    database: 'your_database'
+    password: 'oulagqzfiMyuboXdJnTlLwqPIDUVvVVQ',
+    database: 'railway'
 });
 
 // Настройка сессий
