@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление категориями, мебелью и пользователями</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="https://unpkg.com/mui@0.9.11/dist/css/mui.min.css">
+</head>
+<body>
+    <div class="mui-container">
+        <h1>Категории</h1>
+        <form id="add-category-form" action="/admin/add-category" method="post">
+            <input type="text" name="name" placeholder="Название категории" required>
+            <button type="submit" class="mui-button mui-button--raised">Добавить</button>
+        </form>
+
+        <table id="category-table" class="mui-table mui-table--bordered">
+            <thead>
+                <tr>
+                    <th>Категория</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% categories.forEach(category => { %>
+                    <tr>
+                        <td><%= category.name %></td>
+                        <td>
+                            <form action="/admin/delete-category/<%= category.id %>" method="post">
+                                <button type="submit" class="mui-button mui-button--outlined">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <h1>Мебель</h1>
+        <form id="add-furniture-form" action="/admin/add-furniture" method="post" enctype="multipart/form-data">
+            <input type="text" name="name" placeholder="Название мебели" required>
+            <select name="category_id" required>
+                <% categories.forEach(category => { %>
+                    <option value="<%= category.id %>"><%= category.name %></option>
+                <% }); %>
+            </select>
+            <input type="file" name="image" accept="image/*" required>
+            <button type="submit" class="mui-button mui-button--raised">Добавить мебель</button>
+        </form>
+
+        <table id="furniture-table" class="mui-table mui-table--bordered">
+            <thead>
+                <tr>
+                    <th>Название мебели</th>
+                    <th>Категория</th>
+                    <th>Изображение</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% furniture.forEach(item => { %>
+                    <tr>
+                        <td><%= item.name %></td>
+                        <td>
+                            <% 
+                                const category = categories.find(cat => cat.id == item.category_id);
+                                if (category) { 
+                            %>
+                                <%= category.name %>
+                            <% } else { %>
+                                Неизвестная категория
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if (item.image) { %>
+                                <img src="/image/<%= item.id %>" alt="<%= item.name %>" width="50" height="50">
+                            <% } else { %>
+                                Нет изображения
+                            <% } %>
+                        </td>
+                        <td>
+                            <button onclick="openEditFurnitureModal('<%= item.id %>', '<%= item.name %>', '<%= item.category_id %>')" class="mui-button mui-button--primary">Редактировать</button>
+                            <form action="/admin/delete-furniture" method="post" style="display:inline;">
+                                <input type="hidden" name="id" value="<%= item.id %>">
+                                <button type="submit" class="mui-button mui-button--outlined">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <h1>Пользователи</h1>
+        <form id="add-user-form" action="/admin/add-user" method="post">
+            <input type="text" name="username" placeholder="Имя пользователя" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <select name="is_admin" required>
+                <option value="0">Обычный пользователь</option>
+                <option value="1">Администратор</option>
+            </select>
+            <button type="submit" class="mui-button mui-button--raised">Добавить пользователя</button>
+        </form>
+        
+        <table id="user-table" class="mui-table mui-table--bordered">
+            <thead>
+                <tr>
+                    <th>Имя пользователя</th>
+                    <th>Роль</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach(user => { %>
+                    <tr>
+                        <td><%= user.username %></td>
+                        <td><%= user.is_admin == 1 ? 'Администратор' : 'Обычный пользователь' %></td>
+                        <td>
+                            <button onclick="openEditUserModal('<%= user.id %>', '<%= user.username %>', '<%= user.is_admin %>')" class="mui-button mui-button--primary">Редактировать</button>
+                            <form action="/admin/delete-user" method="post" style="display:inline;">
+                                <input type="hidden" name="id" value="<%= user.id %>">
+                                <button type="submit" class="mui-button mui-button--outlined">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <!-- Модальное окно редактирования мебели -->
+        <div id="edit-furniture-modal" style="display:none;">
+            <form id="edit-furniture-form" action="/admin/edit-furniture" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="id" id="edit-furniture-id">
+                <input type="text" name="name" id="edit-furniture-name" placeholder="Название мебели" required>
+                <select name="category_id" id="edit-furniture-category" required>
+                    <% categories.forEach(category => { %>
+                        <option value="<%= category.id %>"><%= category.name %></option>
+                    <% }); %>
+                </select>
+                <input type="file" name="image" accept="image/*">
+                <button type="submit" class="mui-button mui-button--raised">Сохранить изменения</button>
+            </form>            
+        </div>
+
+        <!-- Модальное окно редактирования пользователя -->
+        <div id="edit-user-modal" style="display:none;">
+            <form id="edit-user-form" action="/admin/edit-user" method="post">
+                <input type="hidden" name="id" id="edit-user-id">
+                <input type="text" name="username" id="edit-user-username" placeholder="Имя пользователя" required>
+                <input type="password" name="password" placeholder="Новый пароль (если нужно)">
+                <select name="is_admin" id="edit-user-role" required>
+                    <option value="0">Обычный пользователь</option>
+                    <option value="1">Администратор</option>
+                </select>
+                <button type="submit" class="mui-button mui-button--raised">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/mui@0.9.11/dist/js/mui.min.js"></script>
+    <script>
+        // Открытие модального окна для редактирования мебели
+        function openEditFurnitureModal(id, name, categoryId) {
+            document.getElementById('edit-furniture-id').value = id;
+            document.getElementById('edit-furniture-name').value = name;
+            document.getElementById('edit-furniture-category').value = categoryId;
+            document.getElementById('edit-furniture-modal').style.display = 'block';
+        }
+
+        // Открытие модального окна для редактирования пользователя
+        function openEditUserModal(id, username, isAdmin) {
+            document.getElementById('edit-user-id').value = id;
+            document.getElementById('edit-user-username').value = username;
+            document.getElementById('edit-user-role').value = isAdmin;
+            document.getElementById('edit-user-modal').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

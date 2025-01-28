@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог мебели</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="/css/catalog.css">
+    <script>
+        async function filterFurniture(category) {
+            try {
+                const response = await fetch(`/api/furniture?category=${category}`);
+                const furniture = await response.json();
+
+                const furnitureList = document.querySelector('.furniture-list');
+                furnitureList.innerHTML = ''; // Очищаем список перед добавлением
+
+                // Добавляем элементы в список
+                furniture.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'furniture-item';
+                    div.innerHTML = `
+                        <div>
+                            <img src="${item.imageUrl}" alt="${item.name}" style="max-width: 100%; max-height: 200px;">
+                            <h3>${item.name}</h3>
+                            <p>Категория: ${item.category}</p>
+                        </div>
+                    `;
+                    furnitureList.appendChild(div);
+                });
+            } catch (err) {
+                console.error('Ошибка загрузки мебели:', err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const categorySelect = document.querySelector('#categorySelect');
+            categorySelect.addEventListener('change', (event) => {
+                filterFurniture(event.target.value);
+            });
+
+            // Загрузка всех мебели при открытии страницы
+            filterFurniture('all');
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Каталог мебели</h1>
+        <div class="header-controls">
+            <input type="text" id="search" placeholder="Поиск">
+        </div>
+        <div id="filters">
+            <label for="category">Категория:</label>
+            <select id="categorySelect">
+                <option value="all">Все</option>
+                <% categories.forEach(category => { %>
+                    <option value="<%= category %>"><%= category %></option>
+                <% }) %>
+            </select>
+        </div>
+    </header>
+
+    <main>
+        <div id="catalog" class="mui-grid furniture-list">
+            <% furniture.forEach(item => { %>
+                <% if (item.name && item.image) { %>
+                    <div class="item" data-category="<%= item.category %>">
+                        <img src="<%= item.image %>" alt="<%= item.name %>" class="mui-image">
+                        <h2><%= item.name %></h2>
+                        <p>Категория: <%= item.category %></p>
+                    </div>
+                <% } %>
+            <% }) %>
+        </div>
+        <div id="pagination"></div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Каталог мебели. Все права защищены.</p>
+    </footer>
+
+    <!-- Модальное окно для изображения -->
+    <div id="image-modal" class="mui-modal">
+        <div class="mui-modal__content">
+            <button class="mui-modal__close">&times;</button>
+            <img id="modal-image" src="" alt="Furniture Image" class="mui-image mui-image--modal">
+        </div>
+    </div>
+                    
+
+    <script src="/js/scripts.js"></script>
+</body>
+</html>
